@@ -16,9 +16,21 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        maven {
+            // Mux repository
+            url = uri("https://muxinc.jfrog.io/artifactory/default-maven-release-local")
+            content {
+                includeGroupByRegex("com\\.mux.*")
+            }
+        }
+        maven {
+            url = uri("https://jitpack.io")
+            credentials {
+                username = System.getenv("authToken")
+            }
+        }
     }
 }
 
 rootProject.name = "vesper-sdk-android-example"
 include(":app")
- 
