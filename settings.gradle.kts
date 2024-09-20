@@ -26,7 +26,7 @@ dependencyResolutionManagement {
         maven {
             url = uri("https://jitpack.io")
             credentials {
-                username = System.getenv("authToken")
+                username = extra["authToken"] as String
             }
         }
     }
