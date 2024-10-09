@@ -22,7 +22,7 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -51,7 +51,7 @@ android {
 
 dependencies {
     // Vesper SDK
-    implementation("com.github.DiceTechnology:vesper-sdk-android:1.0.2") {
+    implementation("com.github.DiceTechnology:vesper-sdk-android:1.0.3") {
         exclude(group = "androidx.media3")
     }
     implementation(libs.androidx.core.ktx)
