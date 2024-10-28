@@ -51,7 +51,7 @@ android {
 
 dependencies {
     // Vesper SDK
-    implementation("com.github.DiceTechnology:vesper-sdk-android:1.0.3") {
+    implementation("com.github.DiceTechnology:vesper-sdk-android:1.0.4") {
         exclude(group = "androidx.media3")
     }
     implementation(libs.androidx.core.ktx)
