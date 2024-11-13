@@ -1,5 +1,5 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <string name="app_name">vesper-sdk-android-example</string>
     <string name="vesper_font_name" translatable="false" tools:ignore="ReferenceType">@font/font1</string>
-    <string name="vesper_cast_receiver_id">40362FF9</string>
+    <string name="vesper_cast_receiver_id"></string>
 </resources>
