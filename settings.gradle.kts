@@ -24,7 +24,8 @@ dependencyResolutionManagement {
             }
         }
         maven {
-            url = uri("https://jitpack.io")
+            // Endeavor Streaming Maven repository
+            url = uri("https://d1yvb7bfbv0w4t.cloudfront.net/")
             credentials {
                 username = extra["authToken"] as String
             }
