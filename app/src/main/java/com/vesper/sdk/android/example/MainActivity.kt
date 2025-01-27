@@ -120,14 +120,14 @@ class MainActivity : BaseActivity(), DorisOutput {
     }
 
     override fun onViewEvent(event: DorisViewEvent) {
-        when (event.event) {
-            DorisViewEvent.Event.fullScreenOffButtonTap -> requestedOrientation =
+        when (event) {
+            is DorisViewEvent.FullScreenOffButtonTap -> requestedOrientation =
                 ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
 
-            DorisViewEvent.Event.fullScreenOnButtonTap -> requestedOrientation =
+            is DorisViewEvent.FullScreenOnButtonTap -> requestedOrientation =
                 ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
 
-            DorisViewEvent.Event.backButtonTap -> finish()
+            is DorisViewEvent.BackButtonTap -> finish()
 
             else -> {}
         }
