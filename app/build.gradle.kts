@@ -51,7 +51,7 @@ android {
 
 dependencies {
     // Vesper SDK
-    implementation("com.endeavorstreaming.vesper:vesper-sdk:1.3.2") {
+    implementation("com.endeavorstreaming.vesper:vesper-sdk:1.3.3") {
         exclude(group = "androidx.media3")
     }
     implementation(libs.androidx.core.ktx)
