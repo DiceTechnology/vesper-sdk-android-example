@@ -1,8 +1,40 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:layout_gravity="center"
-    android:id="@+id/root_view">
+    android:orientation="vertical">
 
-</RelativeLayout>
+    <RelativeLayout
+        android:id="@+id/root_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_gravity="center"/>
+
+    <Button
+        android:id="@+id/to_mini_player_display_type"
+        android:layout_width="140dp"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        android:text="To Mini Player" />
+
+    <Button
+        android:id="@+id/to_mini_bar_display_type"
+        android:layout_width="140dp"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        android:text="To Mini Bar" />
+
+    <Button
+        android:id="@+id/to_naked_display_type"
+        android:layout_width="140dp"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        android:text="To Naked" />
+
+    <Button
+        android:id="@+id/to_regular_display_type"
+        android:layout_width="140dp"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        android:text="To Regular" />
+</LinearLayout>
