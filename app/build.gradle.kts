@@ -5,12 +5,12 @@ plugins {
 
 android {
     namespace = "com.vesper.sdk.android.example"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.vesper.sdk.android.example"
         minSdk = 24
-        targetSdk = 34
+        targetSdk = 35
         versionCode = 1
         versionName = "1.0"
 
@@ -51,7 +51,7 @@ android {
 
 dependencies {
     // Vesper SDK
-    implementation("com.endeavorstreaming.vesper:vesper-sdk:1.3.5") {
+    implementation("com.endeavorstreaming.vesper:vesper-sdk:2.1.2") {
         exclude(group = "androidx.media3")
     }
     implementation(libs.androidx.core.ktx)

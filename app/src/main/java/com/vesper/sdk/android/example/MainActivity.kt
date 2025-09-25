@@ -1,14 +1,23 @@
 package com.vesper.sdk.android.example
 
-import android.content.pm.ActivityInfo
+import android.annotation.SuppressLint
 import android.content.res.Configuration
 import android.os.Bundle
 import android.util.Log
+import android.view.View
 import android.view.ViewGroup
 import android.widget.RelativeLayout
+import androidx.activity.enableEdgeToEdge
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
+import androidx.core.view.updateLayoutParams
+import com.diceplatform.doris.custom.ui.utils.ScreenUtils
 import com.diceplatform.doris.custom.ui.view.DorisOutput
 import com.diceplatform.doris.custom.ui.view.DorisViewEvent
-import com.diceplatform.doris.custom.utils.ScreenUtils
+import com.diceplatform.doris.custom.ui.view.viewmodels.state.DisplayType
 import com.diceplatform.doris.entity.DorisAdEvent
 import com.diceplatform.doris.entity.DorisPlayerEvent
 import com.diceplatform.doris.sdk.playback.ApiConfig
@@ -20,23 +29,56 @@ import com.vesper.sdk.android.config.UserInterfaceConfig
 import com.vesper.sdk.android.config.VesperSdkConfig
 import com.vesper.sdk.android.error.VesperSdkError
 
-class MainActivity : BaseActivity(), DorisOutput {
+class MainActivity : AppCompatActivity(), DorisOutput {
 
     companion object {
         private const val TAG = "MainActivity"
     }
 
+    private lateinit var rootView: RelativeLayout
+    private lateinit var orientationHelper: OrientationHelper
+
     private var vesperSdk: VesperSdk? = null
     private var playerManager: PlayerManager? = null
-    private var rootView: RelativeLayout? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
         setContentView(R.layout.activity_main)
 
+        orientationHelper = OrientationHelper(this)
         rootView = findViewById(R.id.root_view)
+        rootView.keepScreenOn = true
+
+        findViewById<View>(R.id.to_mini_player_display_type).setOnClickListener {
+            orientationHelper.hardLockToPortrait()
+            playerManager?.getUiManager()?.getUiManagerConfig()?.displayType =
+                DisplayType.MINIPLAYER
+            resizePlayer()
+        }
+        findViewById<View>(R.id.to_mini_bar_display_type).setOnClickListener {
+            orientationHelper.hardLockToPortrait()
+            playerManager?.getUiManager()?.getUiManagerConfig()?.displayType = DisplayType.MINIBAR
+            resizePlayer()
+        }
+        findViewById<View>(R.id.to_naked_display_type).setOnClickListener {
+            orientationHelper.hardLockToPortrait()
+            playerManager?.getUiManager()?.getUiManagerConfig()?.displayType = DisplayType.NAKED
+            resizePlayer()
+        }
+        findViewById<View>(R.id.to_regular_display_type).setOnClickListener {
+            orientationHelper.lockToPortrait()
+            playerManager?.getUiManager()?.getUiManagerConfig()?.displayType = DisplayType.REGULAR
+            resizePlayer()
+        }
+
+        // Initial sizing of the player view
         resizePlayer(ScreenUtils.isPortrait(this))
 
+        // Handle edge-to-edge overlaps
+        handleEdgeToEdgeOverlap()
+
+        // Setup the SDK
         setupVesperSdk()
     }
 
@@ -89,8 +131,8 @@ class MainActivity : BaseActivity(), DorisOutput {
     }
 
     private fun attachPlayerView(playerManager: PlayerManager) {
-        rootView?.addView(
-            playerManager.getPlayerView(),
+        rootView.addView(
+            playerManager.getUiManager().getPlayerView(),
             RelativeLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT
@@ -119,19 +161,30 @@ class MainActivity : BaseActivity(), DorisOutput {
         Log.d(TAG, "onAdEvent: $event")
     }
 
+    @SuppressLint("SourceLockedOrientationActivity")
     override fun onViewEvent(event: DorisViewEvent) {
+        Log.d(VesperSdk.TAG, "onViewEvent: $event")
         when (event) {
-            is DorisViewEvent.FullScreenOffButtonTap -> requestedOrientation =
-                ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+            is DorisViewEvent.FullScreenOffButtonTap -> {
+                orientationHelper.lockToPortrait()
+                playerManager?.getUiManager()?.getUiManagerConfig()?.displayType =
+                    DisplayType.REGULAR
+            }
 
-            is DorisViewEvent.FullScreenOnButtonTap -> requestedOrientation =
-                ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+            is DorisViewEvent.FullScreenOnButtonTap -> {
+                orientationHelper.lockToLandscape()
+                playerManager?.getUiManager()?.getUiManagerConfig()?.displayType = DisplayType.MAX
+            }
 
-            is DorisViewEvent.BackButtonTap -> finish()
+            is DorisViewEvent.ExpandButtonTap -> {
+                orientationHelper.lockToPortrait()
+                playerManager?.getUiManager()?.getUiManagerConfig()?.displayType =
+                    DisplayType.REGULAR
+                resizePlayer()
+            }
 
             else -> {}
         }
-        Log.d(TAG, "onViewEvent: $event")
     }
 
     override fun onPictureInPictureModeChanged(
@@ -149,17 +202,74 @@ class MainActivity : BaseActivity(), DorisOutput {
 
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
-        resizePlayer(newConfig.orientation == Configuration.ORIENTATION_PORTRAIT)
+        val displayType = if (newConfig.orientation == Configuration.ORIENTATION_PORTRAIT)
+            DisplayType.REGULAR else DisplayType.MAX
+        resizePlayer(displayType == DisplayType.REGULAR)
+        playerManager?.getUiManager()?.getUiManagerConfig()?.displayType = displayType
     }
 
-    private fun resizePlayer(portrait: Boolean) {
-        rootView?.layoutParams?.apply {
-            width = ViewGroup.LayoutParams.MATCH_PARENT
-            height = if (portrait) {
-                ScreenUtils.getScreenWidth() * 9 / 16
-            } else {
-                ViewGroup.LayoutParams.MATCH_PARENT
+    override fun onStart() {
+        super.onStart()
+        orientationHelper.start()
+    }
+
+    override fun onStop() {
+        super.onStop()
+        orientationHelper.stop()
+    }
+
+    private fun resizePlayer(portrait: Boolean = ScreenUtils.isPortrait(this)) {
+        val layoutParams = rootView.layoutParams as ViewGroup.MarginLayoutParams
+        val displayType = playerManager?.getUiManager()?.getUiManagerConfig()?.displayType
+        if (displayType == DisplayType.NAKED) {
+            layoutParams.apply {
+                width = ScreenUtils.dpToPx(application, 240F)
+                height = ScreenUtils.dpToPx(application, 135F)
             }
+        } else if (displayType == DisplayType.MINIPLAYER) {
+            layoutParams.apply {
+                width = ScreenUtils.dpToPx(application, 185F)
+                height = ScreenUtils.dpToPx(application, 105F)
+            }
+        } else if (displayType == DisplayType.MINIBAR) {
+            layoutParams.apply {
+                width = ViewGroup.LayoutParams.MATCH_PARENT
+                height = ScreenUtils.dpToPx(application, 65F)
+            }
+        } else if (portrait) {
+            layoutParams.apply {
+                width = ViewGroup.LayoutParams.MATCH_PARENT
+                height = ScreenUtils.screenWidth * 9 / 16
+            }
+        } else {
+            layoutParams.apply {
+                width = ViewGroup.LayoutParams.MATCH_PARENT
+                height = ViewGroup.LayoutParams.MATCH_PARENT
+            }
+        }
+    }
+
+    private fun handleEdgeToEdgeOverlap() {
+        ViewCompat.setOnApplyWindowInsetsListener(rootView) { view, insets ->
+            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            view.updateLayoutParams<ViewGroup.MarginLayoutParams> {
+                topMargin = systemBars.top
+            }
+            handleImmersiveMode()
+            insets
+        }
+    }
+
+    private fun handleImmersiveMode() {
+        val windowInsetsController = WindowCompat.getInsetsController(window, window.decorView)
+        val orientation = resources.configuration.orientation
+
+        if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            windowInsetsController.hide(WindowInsetsCompat.Type.systemBars())
+            windowInsetsController.systemBarsBehavior =
+                WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+        } else {
+            windowInsetsController.show(WindowInsetsCompat.Type.systemBars())
         }
     }
 }
