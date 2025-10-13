@@ -141,11 +141,16 @@ class MainActivity : AppCompatActivity(), DorisOutput {
     }
 
     private fun loadVideo(playerManager: PlayerManager) {
+        // Apply configuration
+        playerManager.getPlayerManagerConfig().playerManagerConfigToggles.isPipEnabled = true
+        
+        // Build resolvable source
         val resolvableSource = ResolvableSource.Builder()
             .setId("CONTENT_ID_HERE")
             .setIsLive(false)
             .build()
 
+        // Load resolvable source
         playerManager.load(resolvableSource, object : PlayerManager.Listener {
             override fun onError(error: VesperSdkError) {
                 Log.d(TAG, "Error while loading: $error")
